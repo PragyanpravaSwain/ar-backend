@@ -1,0 +1,139 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  email      String    @unique
+  password   String
+  phone      String
+  role_id    String    @db.ObjectId
+  role       Role      @relation(fields: [role_id], references: [id])
+  avatar_url String?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  deleted    Boolean   @default(false)
+
+  Address Address[]
+
+  Education Education[]
+
+  Experience Experience[]
+
+  Skills Skills[]
+}
+
+model Role {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String    @unique
+  description String
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  deleted     Boolean   @default(false)
+
+  User        User[]
+  permissions role_has_permissions[]
+}
+
+model Permission {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String    @unique
+  description String
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  deleted     Boolean   @default(false)
+
+  roles role_has_permissions[]
+}
+
+model role_has_permissions {
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  role_id       String     @db.ObjectId
+  permission_id String     @db.ObjectId
+  role          Role       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  permission    Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+  deleted_at    DateTime?
+  deleted       Boolean    @default(false)
+}
+
+model Address {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  user_id     String    @unique @db.ObjectId
+  street      String
+  city        String
+  state       String
+  postal_code String
+  country     String
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  deleted     Boolean   @default(false)
+
+  // Relation
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Education {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  user_id    String    @db.ObjectId
+  level      String // e.g., "10th", "12th", "Graduation", "Postgraduation"
+  institute  String
+  start_year Int?
+  end_year   Int?
+  percentage Float?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  deleted    Boolean   @default(false)
+
+  // Relation
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Experience {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  user_id    String    @db.ObjectId
+  type       String // e.g., "Internship", "Full-time", "Part-time", "Remote"
+  role       String // Job Role
+  company    String
+  start_date DateTime
+  end_date   DateTime?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  deleted    Boolean   @default(false)
+
+  // Relation
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Skills {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  user_id    String    @unique @db.ObjectId
+  skills     String[] // Array of skills
+  resume_url String? // URL to the user's resume in S3
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  deleted    Boolean   @default(false)
+
+  // Relation
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
